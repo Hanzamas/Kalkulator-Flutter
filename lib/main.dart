@@ -1,122 +1,261 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const KalkulatorApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KalkulatorApp extends StatelessWidget {
+  const KalkulatorApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Kalkulator Sederhana',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const KalkulatorHome(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class KalkulatorHome extends StatefulWidget {
+  const KalkulatorHome({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<KalkulatorHome> createState() => _KalkulatorHomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _KalkulatorHomeState extends State<KalkulatorHome> {
+  // Variabel untuk menyimpan state kalkulator
+  String _layar = '0';
+  String _angkaPertama = '';
+  String _operator = '';
+  bool _menggantiLayar = false;
 
-  void _incrementCounter() {
+  // Fungsi untuk menangani input angka
+  void _inputAngka(String angka) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      if (_menggantiLayar || _layar == '0') {
+        _layar = angka;
+        _menggantiLayar = false;
+      } else {
+        _layar += angka;
+      }
     });
+  }
+
+  // Fungsi untuk menangani input operator
+  void _inputOperator(String op) {
+    setState(() {
+      if (_angkaPertama.isNotEmpty && !_menggantiLayar) {
+        _hitung();
+      }
+      _angkaPertama = _layar;
+      _operator = op;
+      _menggantiLayar = true;
+    });
+  }
+
+  // Fungsi untuk melakukan perhitungan
+  void _hitung() {
+    if (_angkaPertama.isNotEmpty && _operator.isNotEmpty) {
+      double angka1 = double.parse(_angkaPertama);
+      double angka2 = double.parse(_layar);
+      double hasil = 0;
+
+      switch (_operator) {
+        case '+':
+          hasil = angka1 + angka2;
+          break;
+        case '-':
+          hasil = angka1 - angka2;
+          break;
+        case '×':
+          hasil = angka1 * angka2;
+          break;
+        case '÷':
+          if (angka2 != 0) {
+            hasil = angka1 / angka2;
+          } else {
+            _layar = 'Error';
+            _clear();
+            return;
+          }
+          break;
+      }
+
+      setState(() {
+        _layar = hasil % 1 == 0 ? hasil.toInt().toString() : hasil.toString();
+        _angkaPertama = '';
+        _operator = '';
+        _menggantiLayar = true;
+      });
+    }
+  }
+
+  // Fungsi untuk reset/clear
+  void _clear() {
+    setState(() {
+      _layar = '0';
+      _angkaPertama = '';
+      _operator = '';
+      _menggantiLayar = false;
+    });
+  }
+
+  // Widget untuk membuat tombol kalkulator
+  Widget _buildTombol(String text, {Color? warna, Color? warnaText}) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.all(4),
+        child: ElevatedButton(
+          onPressed: () {
+            if (text == 'C') {
+              _clear();
+            } else if (text == '=') {
+              _hitung();
+            } else if (['+', '-', '×', '÷'].contains(text)) {
+              _inputOperator(text);
+            } else {
+              _inputAngka(text);
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: warna ?? Colors.grey[200],
+            foregroundColor: warnaText ?? Colors.black,
+            padding: const EdgeInsets.all(20),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
+        title: const Text('Kalkulator Sederhana'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        centerTitle: true,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Column(
+        children: [
+          // Layar tampilan hasil
+          Expanded(
+            child: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Text(
+                _layar,
+                style: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.right,
+              ),
             ),
-          ],
-        ),
+          ),
+          
+          // Tombol-tombol kalkulator
+          Expanded(
+            flex: 2,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  // Baris 1: Clear
+                  Expanded(
+                    child: Row(
+                      children: [
+                        _buildTombol('C', warna: Colors.red[400], warnaText: Colors.white),
+                        _buildTombol('', warna: Colors.transparent),
+                        _buildTombol('', warna: Colors.transparent),
+                        _buildTombol('÷', warna: Colors.orange[400], warnaText: Colors.white),
+                      ],
+                    ),
+                  ),
+                  
+                  // Baris 2: 7, 8, 9, ×
+                  Expanded(
+                    child: Row(
+                      children: [
+                        _buildTombol('7'),
+                        _buildTombol('8'),
+                        _buildTombol('9'),
+                        _buildTombol('×', warna: Colors.orange[400], warnaText: Colors.white),
+                      ],
+                    ),
+                  ),
+                  
+                  // Baris 3: 4, 5, 6, -
+                  Expanded(
+                    child: Row(
+                      children: [
+                        _buildTombol('4'),
+                        _buildTombol('5'),
+                        _buildTombol('6'),
+                        _buildTombol('-', warna: Colors.orange[400], warnaText: Colors.white),
+                      ],
+                    ),
+                  ),
+                  
+                  // Baris 4: 1, 2, 3, +
+                  Expanded(
+                    child: Row(
+                      children: [
+                        _buildTombol('1'),
+                        _buildTombol('2'),
+                        _buildTombol('3'),
+                        _buildTombol('+', warna: Colors.orange[400], warnaText: Colors.white),
+                      ],
+                    ),
+                  ),
+                  
+                  // Baris 5: 0, =
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            margin: const EdgeInsets.all(4),
+                            child: ElevatedButton(
+                              onPressed: () => _inputAngka('0'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[200],
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.all(20),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                '0',
+                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ),
+                        _buildTombol('=', warna: Colors.blue[400], warnaText: Colors.white),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
